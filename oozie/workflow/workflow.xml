@@ -1,0 +1,70 @@
+<workflow-app name="Homepage-Demographics" xmlns="uri:oozie:workflow:0.4">
+
+
+    <credentials>
+        <credential name="hcat" type="cbhcat">
+            <property>
+                <name>hcat.metastore.uri</name>
+                <value>${metastoreUri}</value>
+            </property>
+        </credential>
+    </credentials>
+
+    <start to="ComputeScore"/>
+
+        <action name="ComputeScore" cred="hcat">
+        <shell xmlns="uri:oozie:shell-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>oozie.launcher.mapreduce.map.memory.mb</name>
+                    <value>4096</value>
+                </property>
+            </configuration>
+            <exec>spark2-submit</exec>
+            <argument>--driver-memory</argument>
+            <argument>4g</argument>
+            <argument>--executor-memory</argument>
+            <argument>3g</argument>
+            <argument>--conf</argument>
+            <argument>spark.yarn.maxAppAttempts=2</argument>
+            <argument>--conf</argument>
+            <argument>spark.yarn.queue=${queue}</argument>
+            <argument>--py-files</argument>
+            <argument>compute_score.py</argument>
+            <argument>compute_score.py</argument>
+            <file>python/compute_score.py</file>
+        </shell>
+        <ok to="successMail"/>
+        <error to="failMail"/>
+    </action>
+
+
+    <action name="successMail">
+        <email xmlns="uri:oozie:email-action:0.1">
+            <to>${successEmailTo}</to>
+            <subject>[${wf:name()}] Oozie workflow for Homepage-Demographics has finished! &lt;EOM&gt;</subject>
+            <body>The table dataservices.homepage_demographics_job_score</body>
+        </email>
+        <ok to="end"/>
+        <error to="end"/>
+    </action>
+
+    <action name="failMail">
+        <email xmlns="uri:oozie:email-action:0.1">
+            <to>${failureEmailTo}</to>
+            <subject>[${wf:name()}] has failed</subject>
+            <body>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</body>
+        </email>
+        <ok to="kill"/>
+        <error to="kill"/>
+    </action>
+
+    <kill name="kill">
+		<message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+
+    <end name="end"/>
+
+</workflow-app>

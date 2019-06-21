@@ -1,0 +1,27 @@
+<coordinator-app name="Homepage_Demographics_Coordinator"
+ frequency="00 16 * * *"
+ start="${start_date}" end="${end_date}" timezone="America/New_York"
+ xmlns="uri:oozie:coordinator:0.1"
+>
+ <controls>
+    <timeout>90</timeout>
+    <concurrency>1</concurrency>
+    <execution>FIFO</execution>
+ </controls>
+ <action>
+    <workflow>
+      <app-path>${nameNode}/user/jbalaji.site/oozie/workflow/homepage-demographics/workflow.xml</app-path>
+      <configuration>
+        <property>
+          <name>date</name>
+          <value>${coord:formatTime(coord:nominalTime(), &#39;yyyy-MM-dd&#39;)}</value>
+        </property>
+        <property>
+          <name>oozie.use.system.libpath</name>
+          <value>true</value>
+        </property>
+      </configuration>
+    </workflow>
+ </action>
+
+ </coordinator-app>
